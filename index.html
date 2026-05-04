@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guest Feedback & Loyalty System – Griya Persada Convention Hotel & Resort Kaliurang</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    :root {
+      --bg:#F5F6FA; --card:#FFFFFF; --sidebar:#0F172A; --sidebar-hover:#1E293B;
+      --primary:#6366F1; --primary-light:#EEF2FF;
+      --green:#10B981; --green-light:#D1FAE5;
+      --red:#EF4444; --red-light:#FEE2E2;
+      --amber:#F59E0B; --amber-light:#FEF3C7;
+      --blue:#3B82F6; --blue-light:#DBEAFE;
+      --text:#0F172A; --text-2:#64748B; --border:#E2E8F0;
+      --font:'Plus Jakarta Sans', sans-serif;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 13px; }
+    .layout { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width:220px; min-width:220px; background:var(--sidebar); display:flex; flex-direction:column; transition:width .3s,min-width .3s; overflow:hidden; }
+    .sidebar.collapsed { width:62px; min-width:62px; }
+    .sidebar-header { padding:18px 14px 14px; border-bottom:1px solid rgba(255,255,255,0.07); }
+    .logo-wrap { display:flex; align-items:center; gap:10px; }
+    .logo-icon { width:36px; height:36px; border-radius:10px; flex-shrink:0; background:linear-gradient(135deg,#6366F1,#8B5CF6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:800; }
+    .logo-text { color:#fff; font-size:12px; font-weight:700; line-height:1.4; white-space:nowrap; }
+    .logo-text span { color:#64748B; font-weight:400; font-size:10px; display:block; }
+    .sidebar.collapsed .logo-text { display:none; }
+    .user-card { margin:10px 10px 4px; padding:9px 10px; background:rgba(255,255,255,0.05); border-radius:10px; display:flex; align-items:center; gap:8px; }
+    .user-avatar { width:30px; height:30px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#F59E0B,#EF4444); display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:800; }
+    .user-name { color:#F1F5F9; font-size:11px; font-weight:700; white-space:nowrap; }
+    .user-role { color:#64748B; font-size:9px; white-space:nowrap; }
+    .sidebar.collapsed .user-name,.sidebar.collapsed .user-role { display:none; }
+    .nav { flex:1; padding:6px 0; overflow-y:auto; overflow-x:hidden; }
+    .nav-section { color:#475569; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:12px 16px 4px; white-space:nowrap; }
+    .sidebar.collapsed .nav-section { display:none; }
+    .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; margin:1px 8px; border-radius:8px; cursor:pointer; color:#94A3B8; font-size:12px; font-weight:500; transition:all .15s; position:relative; white-space:nowrap; }
+    .nav-item:hover { background:rgba(255,255,255,0.06); color:#E2E8F0; }
+    .nav-item.active { background:rgba(99,102,241,0.18); color:#A5B4FC; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:55%; background:#6366F1; border-radius:0 2px 2px 0; }
+    .nav-icon { width:20px; height:20px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; }
+    .sidebar.collapsed .nav-label { display:none; }
+    .nav-badge { margin-left:auto; background:#EF4444; color:#fff; font-size:9px; font-weight:700; padding:1px 6px; border-radius:20px; }
+    .sidebar.collapsed .nav-badge { display:none; }
+    .toggle-btn { margin:10px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; cursor:pointer; color:#64748B; display:flex; align-items:center; justify-content:center; font-size:16px; border:none; transition:all .15s; font-family:var(--font); }
+    .toggle-btn:hover { background:rgba(255,255,255,0.1); color:#94A3B8; }
+
+    /* ── MAIN ── */
+    .main { flex:1; overflow-y:auto; display:flex; flex-direction:column; min-width:0; }
+    .topbar { background:var(--card); border-bottom:1px solid var(--border); padding:0 22px; height:54px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20; }
+    .topbar-title { font-size:14px; font-weight:800; flex:1; }
+    .topbar-sub { color:var(--text-2); font-size:11px; font-weight:400; }
+    .topbar-actions { display:flex; align-items:center; gap:8px; }
+    .btn { padding:7px 13px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; border:none; font-family:var(--font); display:inline-flex; align-items:center; gap:5px; transition:all .15s; }
+    .btn-primary { background:var(--primary); color:#fff; }
+    .btn-primary:hover { background:#4F46E5; }
+    .btn-outline { background:transparent; color:var(--text); border:1px solid var(--border); }
+    .btn-outline:hover { background:var(--bg); }
+    .btn-green { background:var(--green); color:#fff; }
+    .btn-green:hover { background:#059669; }
+    .btn-red { background:var(--red); color:#fff; }
+    .content { padding:18px 22px; flex:1; }
+    .view { display:none; }
+    .view.active { display:block; }
+
+    /* ── STAT CARDS ── */
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+    .stat-card { background:var(--card); border-radius:14px; padding:14px 16px; border:1px solid var(--border); position:relative; overflow:hidden; }
+    .stat-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; }
+    .stat-card.c-green::after { background:var(--green); }
+    .stat-card.c-red::after { background:var(--red); }
+    .stat-card.c-amber::after { background:var(--amber); }
+    .stat-card.c-purple::after { background:var(--primary); }
+    .stat-card.c-blue::after { background:var(--blue); }
+    .stat-icon { position:absolute; top:12px; right:12px; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+    .stat-label { color:var(--text-2); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+    .stat-value { font-size:26px; font-weight:800; margin:3px 0 2px; line-height:1; }
+    .stat-delta { font-size:10px; font-weight:700; display:flex; align-items:center; gap:3px; }
+    .delta-up { color:var(--green); } .delta-down { color:var(--red); } .delta-flat { color:var(--text-2); }
+
+    /* ── CARDS ── */
+    .card { background:var(--card); border-radius:14px; padding:16px; border:1px solid var(--border); }
+    .card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; }
+    .card-title { font-size:12px; font-weight:800; }
+    .card-sub { font-size:10px; color:var(--text-2); margin-top:2px; }
+    .badge { font-size:9px; font-weight:700; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+    .badge-green { background:var(--green-light); color:#065F46; }
+    .badge-amber { background:var(--amber-light); color:#92400E; }
+    .badge-red { background:var(--red-light); color:#991B1B; }
+    .badge-purple { background:var(--primary-light); color:#3730A3; }
+    .badge-blue { background:var(--blue-light); color:#1E40AF; }
+
+    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+    .grid-2-1 { display:grid; grid-template-columns:1.5fr 1fr; gap:12px; margin-bottom:16px; }
+
+    /* ── GAUGE ── */
+    .gauge-wrap { text-align:center; }
+    .gauge-inner { position:relative; display:inline-block; }
+    .gauge-overlay { position:absolute; bottom:0; left:50%; transform:translateX(-50%); text-align:center; pointer-events:none; }
+    .gauge-num { font-size:28px; font-weight:800; color:var(--green); line-height:1; }
+    .gauge-lbl { font-size:10px; color:var(--text-2); font-weight:700; }
+    .nps-cats { display:flex; justify-content:space-around; margin-top:8px; }
+    .nps-cat-lbl { font-size:9px; color:var(--text-2); }
+    .nps-cat-val { font-size:13px; font-weight:800; }
+
+    /* ── RATING BARS ── */
+    .rating-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+    .rating-name { font-size:11px; color:var(--text-2); width:82px; flex-shrink:0; }
+    .rating-bg { flex:1; height:8px; background:var(--bg); border-radius:4px; overflow:hidden; }
+    .rating-fill { height:100%; border-radius:4px; transition:width .7s; }
+    .rating-val { font-size:11px; font-weight:800; width:26px; text-align:right; }
+
+    /* ── SOURCE ── */
+    .source-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+    .source-icon { width:24px; height:24px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+    .source-name { font-size:11px; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .source-bar-bg { width:80px; height:6px; background:var(--bg); border-radius:3px; overflow:hidden; flex-shrink:0; }
+    .source-bar-fill { height:100%; border-radius:3px; transition:width .7s; }
+    .source-pct { font-size:10px; font-weight:800; width:28px; text-align:right; flex-shrink:0; }
+
+    /* ── REVIEWS ── */
+    .review-filters { display:flex; gap:7px; margin-bottom:12px; flex-wrap:wrap; }
+    .filter-btn { padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700; cursor:pointer; border:1.5px solid var(--border); background:var(--card); font-family:var(--font); color:var(--text-2); transition:all .15s; }
+    .filter-btn.active-all { border-color:var(--primary); background:var(--primary-light); color:#3730A3; }
+    .filter-btn.active-pos { border-color:var(--green); background:var(--green-light); color:#065F46; }
+    .filter-btn.active-neg { border-color:var(--red); background:var(--red-light); color:#991B1B; }
+    .filter-btn.active-neu { border-color:var(--amber); background:var(--amber-light); color:#92400E; }
+    .review-list { display:flex; flex-direction:column; gap:9px; }
+    .review-item { padding:12px; border-radius:10px; border:1px solid var(--border); border-left:3px solid transparent; transition:box-shadow .15s; }
+    .review-item:hover { box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+    .review-item.positive { border-left-color:var(--green); background:#FCFFFD; }
+    .review-item.negative { border-left-color:var(--red); background:#FFFAFA; }
+    .review-item.neutral  { border-left-color:var(--amber); background:#FFFDF5; }
+    .review-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .review-avatar { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#fff; flex-shrink:0; }
+    .review-name { font-size:12px; font-weight:800; flex:1; }
+    .review-room { font-size:10px; color:var(--text-2); }
+    .review-date { font-size:10px; color:var(--text-2); }
+    .review-stars { display:flex; gap:1px; font-size:11px; }
+    .review-body { font-size:11px; color:var(--text-2); line-height:1.55; margin-bottom:6px; }
+    .review-tags { display:flex; gap:5px; flex-wrap:wrap; }
+    .rtag { font-size:9px; font-weight:700; padding:2px 7px; border-radius:20px; }
+    .rtag-pos { background:var(--green-light); color:#065F46; }
+    .rtag-neg { background:var(--red-light); color:#991B1B; }
+    .rtag-neu { background:var(--amber-light); color:#92400E; }
+
+    /* ── DONUT ── */
+    .donut-wrap { display:flex; align-items:center; gap:14px; }
+    .donut-legend { display:flex; flex-direction:column; gap:7px; }
+    .legend-row { display:flex; align-items:center; gap:7px; font-size:11px; }
+    .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+    /* ── PURPOSE ── */
+    .purpose-wrap { display:flex; gap:10px; height:100px; align-items:flex-end; margin-bottom:8px; }
+    .purpose-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .purpose-fill { width:100%; border-radius:6px 6px 0 0; transition:height .7s; }
+    .purpose-pct { font-size:11px; font-weight:800; }
+    .purpose-lbl { font-size:10px; color:var(--text-2); text-align:center; line-height:1.3; }
+
+    /* ── HOBBY ── */
+    .hobby-wrap { display:flex; flex-wrap:wrap; gap:6px; }
+    .hobby-chip { padding:5px 10px; border-radius:20px; font-weight:700; display:flex; align-items:center; gap:4px; }
+
+    /* ── FORM ── */
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .form-group { display:flex; flex-direction:column; gap:4px; }
+    .form-group.full { grid-column:1/-1; }
+    .form-label { font-size:10px; font-weight:700; color:var(--text-2); text-transform:uppercase; letter-spacing:.04em; }
+    .form-input { padding:8px 11px; border:1px solid var(--border); border-radius:8px; font-size:12px; font-family:var(--font); background:#FAFAFA; color:var(--text); transition:border-color .15s; }
+    .form-input:focus { outline:none; border-color:var(--primary); background:#fff; }
+    select.form-input { cursor:pointer; }
+    textarea.form-input { resize:vertical; min-height:70px; }
+    .star-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+    .star-label { font-size:11px; color:var(--text-2); width:90px; flex-shrink:0; }
+    .stars { display:flex; gap:4px; }
+    .sstar { width:28px; height:28px; border-radius:6px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; transition:all .12s; font-family:var(--font); }
+    .sstar.on { background:var(--amber-light); border-color:var(--amber); }
+    .nps-row { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:14px; }
+    .nps-btn { width:34px; height:34px; border-radius:8px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:12px; font-weight:800; font-family:var(--font); transition:all .12s; }
+    .nps-btn.on-detractor { background:var(--red-light); border-color:var(--red); color:#991B1B; }
+    .nps-btn.on-passive { background:var(--amber-light); border-color:var(--amber); color:#92400E; }
+    .nps-btn.on-promoter { background:var(--green-light); border-color:var(--green); color:#065F46; }
+    .form-success { margin-top:10px; padding:10px 14px; border-radius:8px; background:var(--green-light); color:#065F46; font-size:12px; font-weight:700; display:none; }
+    .form-error { margin-top:10px; padding:10px 14px; border-radius:8px; background:var(--red-light); color:#991B1B; font-size:12px; font-weight:700; display:none; }
+
+    /* ── SENTIMENT ── */
+    .sent-cat-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .sent-cat-name { font-size:11px; color:var(--text-2); width:85px; flex-shrink:0; }
+    .sent-bar { flex:1; height:12px; background:var(--bg); border-radius:6px; overflow:hidden; display:flex; }
+    .sent-pos { background:var(--green); } .sent-neu { background:var(--amber); } .sent-neg { background:var(--red); }
+    .sent-pct { font-size:10px; color:var(--green); font-weight:800; width:28px; text-align:right; }
+
+    .scroll { overflow-y:auto; }
+    .scroll::-webkit-scrollbar { width:3px; }
+    .scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+    .section-head { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; margin-bottom:14px; }
+    .section-dot { width:7px; height:7px; border-radius:50%; background:var(--primary); }
+    .pill { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; background:var(--bg); border:1px solid var(--border); font-size:10px; color:var(--text-2); font-weight:600; }
+    .complaint-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+    .complaint-num { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; }
+    .complaint-text { flex:1; font-size:11px; font-weight:500; }
+    .complaint-cnt { font-size:11px; font-weight:800; }
+
+    /* ── LOADING SPINNER ── */
+    .spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── TABLE VIEW ── */
+    .data-table { width:100%; border-collapse:collapse; font-size:11px; }
+    .data-table th { background:#1E293B; color:#fff; padding:8px 10px; text-align:left; font-size:10px; font-weight:700; }
+    .data-table td { padding:8px 10px; border-bottom:1px solid var(--border); }
+    .data-table tr:hover td { background:#F8FAFC; }
+
+    /* ── STATUS BADGE ── */
+    .status-online { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; color:var(--green); }
+    .status-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-wrap">
+        <div class="logo-icon">GF</div>
+        <div class="logo-text">Guest Feedback<span>Loyalty System</span></div>
+      </div>
+    </div>
+    <div class="user-card">
+      <div class="user-avatar">FL</div>
+      <div>
+        <div class="user-name">Femi Lovitha DM</div>
+        <div class="user-role">Customer Relations Specialist</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="goTo('overview',this)">
+        <span class="nav-icon">◉</span><span class="nav-label">Overview</span>
+      </div>
+      <div class="nav-item" onclick="goTo('reviews',this)">
+        <span class="nav-icon">💬</span><span class="nav-label">Reviews Feed</span>
+        <span class="nav-badge" id="badge-reviews">—</span>
+      </div>
+      <div class="nav-item" onclick="goTo('input',this)">
+        <span class="nav-icon">✏️</span><span class="nav-label">Input Tamu</span>
+      </div>
+      <div class="nav-section">Analitik</div>
+      <div class="nav-item" onclick="goTo('sentiment',this)">
+        <span class="nav-icon">📊</span><span class="nav-label">Sentiment Analysis</span>
+      </div>
+      <div class="nav-item" onclick="goTo('sources',this)">
+        <span class="nav-icon">🌐</span><span class="nav-label">Sumber Tamu</span>
+      </div>
+      <div class="nav-item" onclick="goTo('datatable',this)">
+        <span class="nav-icon">🗄</span><span class="nav-label">Semua Data</span>
+      </div>
+    </nav>
+    <div style="padding:10px;border-top:1px solid rgba(255,255,255,0.06)">
+      <div class="status-online" id="serverStatus">
+        <div class="status-dot"></div> Menghubungkan...
+      </div>
+    </div>
+    <button class="toggle-btn" onclick="toggleSidebar()">⇄</button>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <div class="main" id="mainArea">
+    <div class="topbar">
+      <div style="flex:1">
+        <div class="topbar-title">
+          Guest Feedback &amp; Loyalty System
+          <span class="topbar-sub" id="topbarSub">· Griya Persada · Memuat...</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span class="pill">🗓 <span id="topbarDate">—</span></span>
+        <button class="btn btn-outline" onclick="goTo('input', document.querySelectorAll('.nav-item')[2])">+ Input Manual</button>
+        <button class="btn btn-primary" onclick="eksporCSV()">↓ Ekspor CSV</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══ OVERVIEW ══ -->
+      <div class="view active" id="view-overview">
+        <div class="stats-grid">
+          <div class="stat-card c-green">
+            <div class="stat-icon" style="background:var(--green-light)">⭐</div>
+            <div class="stat-label">Rata-rata Rating</div>
+            <div class="stat-value" style="color:var(--green)" id="stat-rating">—</div>
+            <div class="stat-delta" id="stat-rating-delta">Memuat data...</div>
+          </div>
+          <div class="stat-card c-purple">
+            <div class="stat-icon" style="background:var(--primary-light)">📋</div>
+            <div class="stat-label">Total Feedback</div>
+            <div class="stat-value" style="color:var(--primary)" id="stat-total">—</div>
+            <div class="stat-delta" id="stat-total-delta">Memuat data...</div>
+          </div>
+          <div class="stat-card c-amber">
+            <div class="stat-icon" style="background:var(--amber-light)">🎯</div>
+            <div class="stat-label">NPS Score</div>
+            <div class="stat-value" style="color:var(--amber)" id="stat-nps">—</div>
+            <div class="stat-delta" id="stat-nps-delta">Memuat data...</div>
+          </div>
+          <div class="stat-card c-blue">
+            <div class="stat-icon" style="background:var(--blue-light)">🏠</div>
+            <div class="stat-label">Tamu Bulan Ini</div>
+            <div class="stat-value" style="color:var(--blue)" id="stat-tamu">—</div>
+            <div class="stat-delta" id="stat-tamu-delta">Memuat data...</div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <!-- NPS Gauge -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Net Promoter Score</div><div class="card-sub">Dari data tamu real</div></div>
+              <span class="badge badge-green" id="npsBadge">—</span>
+            </div>
+            <div class="gauge-wrap">
+              <div class="gauge-inner">
+                <canvas id="gaugeCanvas" width="180" height="110"></canvas>
+                <div class="gauge-overlay">
+                  <div class="gauge-num" id="gaugeNum">—</div>
+                  <div class="gauge-lbl">NPS</div>
+                </div>
+              </div>
+            </div>
+            <div class="nps-cats">
+              <div style="text-align:center">
+                <div class="nps-cat-lbl" style="color:var(--red)">Detractor</div>
+                <div class="nps-cat-val" style="color:var(--red)" id="nps-det">—</div>
+              </div>
+              <div style="text-align:center">
+                <div class="nps-cat-lbl" style="color:var(--amber)">Passive</div>
+                <div class="nps-cat-val" style="color:var(--amber)" id="nps-pas">—</div>
+              </div>
+              <div style="text-align:center">
+                <div class="nps-cat-lbl" style="color:var(--green)">Promoter</div>
+                <div class="nps-cat-val" style="color:var(--green)" id="nps-pro">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Donut Sentimen -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Segmentasi Sentimen</div><div class="card-sub">Berdasarkan rating</div></div>
+            </div>
+            <div class="donut-wrap" style="justify-content:center">
+              <canvas id="donutCanvas" width="100" height="100"></canvas>
+              <div class="donut-legend" id="donutLegend">
+                <div class="legend-row"><div class="legend-dot" style="background:var(--green)"></div><span>Positif <strong id="sent-pos">—</strong></span></div>
+                <div class="legend-row"><div class="legend-dot" style="background:var(--amber)"></div><span>Netral <strong id="sent-neu">—</strong></span></div>
+                <div class="legend-row"><div class="legend-dot" style="background:var(--red)"></div><span>Negatif <strong id="sent-neg">—</strong></span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tujuan Kunjungan -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Tujuan Kunjungan</div><div class="card-sub">Distribusi tamu</div></div>
+            </div>
+            <div class="purpose-wrap" id="purposeWrap">
+              <div style="color:var(--text-2);font-size:11px;margin:auto">Memuat...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2-1">
+          <!-- Rating bars -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Rata-rata Penilaian per Kategori</div><div class="card-sub">Skala 1–5</div></div>
+              <span class="badge badge-green" id="avg-badge">Avg — / 5</span>
+            </div>
+            <div id="ratingBars"></div>
+            <canvas id="trendCanvas" height="65" style="margin-top:14px"></canvas>
+          </div>
+          <!-- Sumber -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Sumber Informasi Tamu</div><div class="card-sub">Dari mana tamu mengetahui hotel</div></div>
+            </div>
+            <div id="sourceList"></div>
+          </div>
+        </div>
+
+        <!-- Hobi -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div><div class="card-title">Profil Hobi Tamu</div><div class="card-sub">Dari data kartu komentar</div></div>
+          </div>
+          <div class="hobby-wrap" id="hobbyWrap"><span style="color:var(--text-2);font-size:11px">Memuat...</span></div>
+        </div>
+      </div>
+
+      <!-- ══ REVIEWS ══ -->
+      <div class="view" id="view-reviews">
+        <div class="section-head"><div class="section-dot"></div>Reviews Feed — Data Real Database</div>
+        <div class="review-filters">
+          <button class="filter-btn active-all" onclick="filterReviews('all',this)">Semua</button>
+          <button class="filter-btn" onclick="filterReviews('positive',this)">😊 Positif (≥4★)</button>
+          <button class="filter-btn" onclick="filterReviews('neutral',this)">😐 Netral (3★)</button>
+          <button class="filter-btn" onclick="filterReviews('negative',this)">😞 Negatif (≤2★)</button>
+        </div>
+        <div class="review-list scroll" id="reviewList" style="max-height:calc(100vh - 220px)"></div>
+      </div>
+
+      <!-- ══ INPUT ══ -->
+      <div class="view" id="view-input">
+        <div class="section-head"><div class="section-dot"></div>Input Manual – Kartu Komentar Tamu</div>
+        <div class="card" style="max-width:680px">
+          <div style="margin-bottom:14px">
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px">Data Identitas Tamu</div>
+            <div style="font-size:11px;color:var(--text-2)">Data tersimpan langsung ke database hotel</div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Nama Tamu *</label><input class="form-input" type="text" placeholder="Cth: Budi Santoso" id="fName"></div>
+            <div class="form-group"><label class="form-label">Nomor Kamar *</label><input class="form-input" type="text" placeholder="Cth: 301" id="fRoom"></div>
+            <div class="form-group"><label class="form-label">Tanggal</label><input class="form-input" type="date" id="fDate"></div>
+            <div class="form-group"><label class="form-label">No. WhatsApp</label><input class="form-input" type="text" placeholder="+62 812 xxxx xxxx" id="fWA"></div>
+            <div class="form-group"><label class="form-label">Alamat Email</label><input class="form-input" type="email" placeholder="email@contoh.com" id="fEmail"></div>
+            <div class="form-group"><label class="form-label">Social Media</label><input class="form-input" type="text" placeholder="@username_instagram" id="fSocial"></div>
+            <div class="form-group"><label class="form-label">Hobi</label><input class="form-input" type="text" placeholder="Cth: Fotografi, Kuliner, Traveling" id="fHobby"></div>
+            <div class="form-group"><label class="form-label">Tujuan Kunjungan</label>
+              <select class="form-input" id="fPurpose">
+                <option value="">-- Pilih Tujuan --</option>
+                <option value="holiday">🏖 Holiday</option>
+                <option value="business">💼 Business</option>
+                <option value="combo">🔀 Combination of Both</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Sumber Informasi Hotel</label>
+              <select class="form-input" id="fSource">
+                <option value="">-- Mengetahui hotel dari --</option>
+                <optgroup label="OTA"><option>Traveloka</option><option>Tiket.com</option><option>Agoda</option><option>MGHoliday</option><option>Expedia</option><option>C-Trip</option></optgroup>
+                <optgroup label="Social Media"><option>Instagram</option><option>TikTok</option><option>Facebook</option><option>YouTube</option></optgroup>
+                <optgroup label="Lainnya"><option>Website</option><option>TripAdvisor</option><option>Hotelbeds</option><option>Teman</option><option>Kolega</option><option>Keluarga</option></optgroup>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Promo yang Diinginkan</label><input class="form-input" type="text" placeholder="Cth: Diskon Weekend, F&B Promo" id="fPromo"></div>
+          </div>
+          <div style="margin:14px 0 8px;font-size:13px;font-weight:800">Penilaian Layanan (1=Sangat Buruk · 5=Sangat Baik)</div>
+          <div id="starsInput"></div>
+          <div style="margin:12px 0 6px;font-size:13px;font-weight:800">Net Promoter Score (NPS)</div>
+          <div style="font-size:10px;color:var(--text-2);margin-bottom:8px">1–6 = Detractor 🔴 · 7–8 = Passive 🟡 · 9–10 = Promoter 🟢</div>
+          <div class="nps-row" id="npsInput"></div>
+          <div class="form-group full" style="margin-bottom:14px">
+            <label class="form-label">Saran dan Masukan Tamu</label>
+            <textarea class="form-input" id="fComments" placeholder="Tulis saran dan masukan tamu di sini..."></textarea>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-green" style="flex:1" id="submitBtn" onclick="submitForm()">✓ Simpan Data Tamu</button>
+            <button class="btn btn-outline" onclick="clearForm()">Bersihkan</button>
+          </div>
+          <div class="form-success" id="formSuccess"></div>
+          <div class="form-error" id="formError"></div>
+        </div>
+      </div>
+
+      <!-- ══ SENTIMENT ══ -->
+      <div class="view" id="view-sentiment">
+        <div class="section-head"><div class="section-dot"></div>Sentiment Analysis</div>
+        <div class="stats-grid">
+          <div class="stat-card c-green"><div class="stat-icon" style="background:var(--green-light)">😊</div><div class="stat-label">Positif</div><div class="stat-value" style="color:var(--green)" id="s-pos">—</div><div class="stat-delta delta-up">Rating ≥ 4</div></div>
+          <div class="stat-card c-amber"><div class="stat-icon" style="background:var(--amber-light)">😐</div><div class="stat-label">Netral</div><div class="stat-value" style="color:var(--amber)" id="s-neu">—</div><div class="stat-delta delta-flat">Rating = 3</div></div>
+          <div class="stat-card c-red"><div class="stat-icon" style="background:var(--red-light)">😞</div><div class="stat-label">Negatif</div><div class="stat-value" style="color:var(--red)" id="s-neg">—</div><div class="stat-delta delta-down">Rating ≤ 2</div></div>
+          <div class="stat-card c-purple"><div class="stat-icon" style="background:var(--primary-light)">📋</div><div class="stat-label">Total Feedback</div><div class="stat-value" style="color:var(--primary)" id="s-total">—</div><div class="stat-delta delta-flat">Semua data</div></div>
+        </div>
+        <div class="grid-2-1">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Sentimen per Kategori Layanan</div><div style="display:flex;gap:5px"><span class="badge badge-green">Positif</span><span class="badge badge-amber">Netral</span><span class="badge badge-red">Negatif</span></div></div>
+            <div id="sentCatBars"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Distribusi Rating NPS</div></div>
+            <div id="npsDistrib"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SOURCES ══ -->
+      <div class="view" id="view-sources">
+        <div class="section-head"><div class="section-dot"></div>Sumber Informasi Tamu</div>
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Distribusi Lengkap Sumber Informasi</div><div class="card-sub">Dari database real</div></div></div>
+          <div id="fullSourceChart"></div>
+        </div>
+      </div>
+
+      <!-- ══ DATA TABLE ══ -->
+      <div class="view" id="view-datatable">
+        <div class="section-head"><div class="section-dot"></div>Semua Data Tamu</div>
+        <div class="card" style="overflow-x:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span id="tableCount" style="font-size:11px;color:var(--text-2)">Memuat...</span>
+            <button class="btn btn-outline" onclick="muatDataTable()">🔄 Refresh</button>
+          </div>
+          <div style="overflow-x:auto;max-height:calc(100vh - 240px);overflow-y:auto">
+            <table class="data-table" id="dataTable">
+              <thead>
+                <tr>
+                  <th>ID</th><th>Nama</th><th>Kamar</th><th>Tanggal</th>
+                  <th>WA</th><th>Email</th><th>Tujuan</th><th>Sumber</th>
+                  <th>Pelayanan</th><th>Makanan</th><th>Kebersihan</th><th>Suasana</th><th>Fasilitas</th>
+                  <th>NPS</th><th>Komentar</th><th>Hapus</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+// ══════════════════════════════════════════════
+// KONFIGURASI
+// ══════════════════════════════════════════════
+const API = 'https://script.google.com/macros/s/AKfycbw-nKgoOGNtT-sPTRwQ9twmWvwHv1FzL50wp29Wb-KuprmJVMNYBgoeEGjXQhkBIoJ_/exec
+';
+const RATING_COLORS = ['#6366F1','#F59E0B','#10B981','#3B82F6','#EF4444'];
+const SOURCE_COLORS = { Instagram:'#6366F1',Traveloka:'#3B82F6','Tiket.com':'#EF4444',Agoda:'#8B5CF6',TikTok:'#F59E0B',Facebook:'#1877F2',YouTube:'#FF0000',Website:'#10B981',TripAdvisor:'#00AA6C',Referral:'#10B981',Teman:'#10B981',Keluarga:'#84CC16',Kolega:'#06B6D4' };
+const SOURCE_ICONS  = { Instagram:'📸',Traveloka:'✈️','Tiket.com':'🎟',Agoda:'🏨',TikTok:'🎵',Facebook:'👤',YouTube:'▶️',Website:'🌐',TripAdvisor:'🟢',Teman:'👥',Keluarga:'👨‍👩‍👧',Kolega:'💼',MGHoliday:'🌴',Expedia:'🗺','C-Trip':'🇨🇳',Hotelbeds:'🏩' };
+
+let allFeedbackData = [];
+let donutChart = null;
+let trendChart = null;
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function goTo(id, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'datatable') muatDataTable();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ══════════════════════════════════════════════
+// API HELPER
+// ══════════════════════════════════════════════
+async function apiFetch(endpoint, options = {}) {
+  const res = await fetch(API + endpoint, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  });
+  return res.json();
+}
+
+// ══════════════════════════════════════════════
+// CEK STATUS SERVER
+// ══════════════════════════════════════════════
+async function cekServer() {
+  const el = document.getElementById('serverStatus');
+  try {
+    await apiFetch('');
+    el.innerHTML = '<div class="status-dot"></div> Server Online';
+    el.style.color = 'var(--green)';
+    return true;
+  } catch {
+    el.innerHTML = '⚠️ Server Offline';
+    el.style.color = 'var(--red)';
+    return false;
+  }
+}
+
+// ══════════════════════════════════════════════
+// MUAT SEMUA DATA DASHBOARD
+// ══════════════════════════════════════════════
+async function muatDashboard() {
+  try {
+    // Ringkasan statistik
+    const rRes = await apiFetch('/statistik/ringkasan');
+    if (rRes.sukses) renderRingkasan(rRes.data);
+
+    // Sumber
+    const sRes = await apiFetch('/statistik/sumber');
+    if (sRes.sukses) renderSumber(sRes.data);
+
+    // Tujuan kunjungan
+    const tRes = await apiFetch('/statistik/tujuan');
+    if (tRes.sukses) renderTujuan(tRes.data);
+
+    // Hobi
+    const hRes = await apiFetch('/statistik/hobi');
+    if (hRes.sukses) renderHobi(hRes.data);
+
+    // Sentimen
+    const sentRes = await apiFetch('/statistik/sentimen');
+    if (sentRes.sukses) renderSentimen(sentRes.data);
+
+    // Tren
+    const trenRes = await apiFetch('/statistik/tren');
+    if (trenRes.sukses) drawTrend(trenRes.data);
+
+    // Reviews
+    const fRes = await apiFetch('/feedback?limit=50');
+    if (fRes.sukses) {
+      allFeedbackData = fRes.data;
+      renderReviews('all');
+      document.getElementById('badge-reviews').textContent = fRes.total;
+    }
+  } catch (err) {
+    console.error('Gagal muat dashboard:', err);
+  }
+}
+
+// ══════════════════════════════════════════════
+// RENDER: Ringkasan
+// ══════════════════════════════════════════════
+function renderRingkasan(d) {
+  const r = d.rating_rata;
+  const nps = d.nps;
+
+  document.getElementById('stat-rating').textContent = r.keseluruhan || '—';
+  document.getElementById('stat-total').textContent = d.total_feedback;
+  document.getElementById('stat-nps').textContent = nps.skor;
+  document.getElementById('stat-tamu').textContent = d.tamu_bulan_ini;
+
+  const delta = d.delta_tamu;
+  const deltaEl = document.getElementById('stat-tamu-delta');
+  deltaEl.className = 'stat-delta ' + (delta >= 0 ? 'delta-up' : 'delta-down');
+  deltaEl.textContent = (delta >= 0 ? '▲ +' : '▼ ') + delta + ' vs bulan lalu';
+
+  document.getElementById('stat-rating-delta').textContent = 'Rata-rata semua kategori';
+  document.getElementById('stat-total-delta').textContent = 'Total keseluruhan tersimpan';
+  document.getElementById('stat-nps-delta').textContent = `Promoter ${nps.promoter} · Passive ${nps.passive} · Detractor ${nps.detractor}`;
+
+  document.getElementById('avg-badge').textContent = `Avg ${r.keseluruhan || '—'} / 5`;
+
+  // Update s-* di sentiment view
+  const total = d.total_feedback;
+
+  // Gauge NPS
+  const npsScore = nps.skor;
+  document.getElementById('gaugeNum').textContent = npsScore;
+  document.getElementById('npsBadge').textContent = npsScore >= 50 ? 'Promoter Zone' : npsScore >= 0 ? 'Passive Zone' : 'Perlu Perhatian';
+
+  const tot = nps.total_nps || 1;
+  document.getElementById('nps-det').textContent = Math.round(nps.detractor / tot * 100) + '%';
+  document.getElementById('nps-pas').textContent = Math.round(nps.passive / tot * 100) + '%';
+  document.getElementById('nps-pro').textContent = Math.round(nps.promoter / tot * 100) + '%';
+  drawGauge(npsScore);
+
+  // Rating bars
+  const cats = [
+    { name:'Pelayanan',  val: r.pelayanan,  color: RATING_COLORS[0] },
+    { name:'Makanan',    val: r.makanan,    color: RATING_COLORS[1] },
+    { name:'Kebersihan', val: r.kebersihan, color: RATING_COLORS[2] },
+    { name:'Suasana',    val: r.suasana,    color: RATING_COLORS[3] },
+    { name:'Fasilitas',  val: r.fasilitas,  color: RATING_COLORS[4] },
+  ];
+  document.getElementById('ratingBars').innerHTML = cats.map(c => `
+    <div class="rating-row">
+      <div class="rating-name">${c.name}</div>
+      <div class="rating-bg"><div class="rating-fill" style="width:${(c.val||0)/5*100}%;background:${c.color}"></div></div>
+      <div class="rating-val" style="color:${c.color}">${c.val || '—'}</div>
+    </div>`).join('');
+
+  // Sentimen donut dari rating rata-rata
+  const posCount = Math.round(total * 0.68); // fallback; akan diupdate dari sentimen endpoint
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('s-total').textContent = total;
+}
+
+// ══════════════════════════════════════════════
+// RENDER: Sentimen
+// ══════════════════════════════════════════════
+function renderSentimen(data) {
+  // Hitung agregat dari semua kategori
+  let totPos = 0, totNeu = 0, totNeg = 0, totAll = 0;
+  const cats = Object.entries(data);
+
+  cats.forEach(([, v]) => {
+    totPos += v.positif; totNeu += v.netral; totNeg += v.negatif; totAll += v.total;
+  });
+
+  const pPos = totAll ? Math.round(totPos / totAll * 100) : 0;
+  const pNeu = totAll ? Math.round(totNeu / totAll * 100) : 0;
+  const pNeg = totAll ? Math.round(totNeg / totAll * 100) : 0;
+
+  document.getElementById('sent-pos').textContent = pPos + '%';
+  document.getElementById('sent-neu').textContent = pNeu + '%';
+  document.getElementById('sent-neg').textContent = pNeg + '%';
+  document.getElementById('s-pos').textContent = pPos + '%';
+  document.getElementById('s-neu').textContent = pNeu + '%';
+  document.getElementById('s-neg').textContent = pNeg + '%';
+
+  // Donut
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(document.getElementById('donutCanvas').getContext('2d'), {
+    type: 'doughnut',
+    data: { datasets: [{ data: [pPos, pNeu, pNeg], backgroundColor: ['#10B981','#F59E0B','#EF4444'], borderWidth: 0, spacing: 2 }] },
+    options: { cutout: '70%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { duration: 900 } }
+  });
+
+  // Sentiment per kategori bars
+  const namaCats = { pelayanan:'Pelayanan', makanan:'Makanan', kebersihan:'Kebersihan', suasana:'Suasana', fasilitas:'Fasilitas' };
+  document.getElementById('sentCatBars').innerHTML = cats.map(([k, v]) => {
+    const t = v.total || 1;
+    const pp = Math.round(v.positif/t*100), pn = Math.round(v.netral/t*100), neg = Math.round(v.negatif/t*100);
+    return `<div class="sent-cat-row">
+      <div class="sent-cat-name">${namaCats[k]||k}</div>
+      <div class="sent-bar"><div class="sent-pos" style="width:${pp}%"></div><div class="sent-neu" style="width:${pn}%"></div><div class="sent-neg" style="width:${neg}%"></div></div>
+      <div class="sent-pct">${pp}%</div>
+    </div>`;
+  }).join('');
+
+  // NPS distribusi
+  const npsEl = document.getElementById('npsDistrib');
+  if (npsEl) {
+    const npsData = { Promoter: { n: 0, color: '#10B981' }, Passive: { n: 0, color: '#F59E0B' }, Detractor: { n: 0, color: '#EF4444' } };
+    allFeedbackData.forEach(r => {
+      if (!r.nps_score) return;
+      if (r.nps_score >= 9) npsData.Promoter.n++;
+      else if (r.nps_score >= 7) npsData.Passive.n++;
+      else npsData.Detractor.n++;
+    });
+    const total = Object.values(npsData).reduce((a, b) => a + b.n, 0) || 1;
+    npsEl.innerHTML = Object.entries(npsData).map(([label, { n, color }]) => `
+      <div class="rating-row">
+        <div class="rating-name">${label}</div>
+        <div class="rating-bg"><div class="rating-fill" style="width:${Math.round(n/total*100)}%;background:${color}"></div></div>
+        <div class="rating-val" style="color:${color}">${n}</div>
+      </div>`).join('');
+  }
+}
+
+// ══════════════════════════════════════════════
+// RENDER: Sumber
+// ══════════════════════════════════════════════
+function renderSumber(data) {
+  const top = data.slice(0, 7);
+  const html = top.map(s => {
+    const color = SOURCE_COLORS[s.sumber] || '#94A3B8';
+    const icon  = SOURCE_ICONS[s.sumber] || '📌';
+    return `<div class="source-row">
+      <div class="source-icon" style="background:${color}22">${icon}</div>
+      <div class="source-name">${s.sumber}</div>
+      <div class="source-bar-bg"><div class="source-bar-fill" style="width:${s.persen}%;background:${color}"></div></div>
+      <div class="source-pct" style="color:${color}">${s.persen}%</div>
+    </div>`;
+  }).join('');
+  document.getElementById('sourceList').innerHTML = html || '<p style="color:var(--text-2);font-size:11px">Belum ada data sumber</p>';
+
+  const fullEl = document.getElementById('fullSourceChart');
+  if (fullEl) {
+    fullEl.innerHTML = data.map(s => {
+      const color = SOURCE_COLORS[s.sumber] || '#94A3B8';
+      const icon  = SOURCE_ICONS[s.sumber] || '📌';
+      return `<div class="source-row">
+        <div class="source-icon" style="background:${color}22">${icon}</div>
+        <div class="source-name">${s.sumber}</div>
+        <div class="source-bar-bg" style="width:200px"><div class="source-bar-fill" style="width:${s.persen}%;background:${color}"></div></div>
+        <div class="source-pct" style="color:${color}">${s.persen}% (${s.jumlah})</div>
+      </div>`;
+    }).join('') || '<p style="color:var(--text-2);font-size:11px">Belum ada data sumber</p>';
+  }
+}
+
+// ══════════════════════════════════════════════
+// RENDER: Tujuan Kunjungan
+// ══════════════════════════════════════════════
+function renderTujuan(data) {
+  const icons = { holiday:'🏖', business:'💼', combo:'🔀' };
+  const colors = { holiday: 'var(--primary)', business: 'var(--blue)', combo: 'var(--green)' };
+  const max = Math.max(...data.map(d => d.jumlah), 1);
+
+  document.getElementById('purposeWrap').innerHTML = data.length
+    ? data.map(d => `
+      <div class="purpose-col">
+        <div class="purpose-pct" style="color:${colors[d.tujuan]||'var(--text-2)'}">${d.persen}%</div>
+        <div class="purpose-fill" style="background:${colors[d.tujuan]||'#94A3B8'};height:${Math.round(d.jumlah/max*80)+10}px"></div>
+        <div class="purpose-lbl">${icons[d.tujuan]||'🏨'} ${d.tujuan||'Lainnya'}</div>
+      </div>`).join('')
+    : '<div style="color:var(--text-2);font-size:11px;margin:auto">Belum ada data</div>';
+}
+
+// ══════════════════════════════════════════════
+// RENDER: Hobi
+// ══════════════════════════════════════════════
+function renderHobi(data) {
+  const COLORS = ['#3B82F6','#F59E0B','#6366F1','#10B981','#EF4444','#8B5CF6','#06B6D4','#84CC16','#EC4899','#14B8A6'];
+  const max = data.length ? data[0].jumlah : 1;
+  document.getElementById('hobbyWrap').innerHTML = data.length
+    ? data.map((h, i) => {
+        const fs = 10 + Math.round((h.jumlah / max) * 8);
+        const color = COLORS[i % COLORS.length];
+        return `<div class="hobby-chip" style="background:${color}18;color:${color};font-size:${fs}px">${h.nama} <strong>${h.jumlah}</strong></div>`;
+      }).join('')
+    : '<span style="color:var(--text-2);font-size:11px">Belum ada data hobi</span>';
+}
+
+// ══════════════════════════════════════════════
+// RENDER: Reviews Feed
+// ══════════════════════════════════════════════
+function renderReviews(filter) {
+  const el = document.getElementById('reviewList');
+  let data = allFeedbackData;
+
+  if (filter === 'positive') data = data.filter(r => avgRating(r) >= 4);
+  else if (filter === 'negative') data = data.filter(r => avgRating(r) <= 2 && avgRating(r) > 0);
+  else if (filter === 'neutral') data = data.filter(r => { const a = avgRating(r); return a === 3; });
+
+  if (!data.length) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-2);font-size:12px">Tidak ada data untuk filter ini</div>';
+    return;
+  }
+
+  const colors = ['#10B981','#6366F1','#F59E0B','#3B82F6','#EF4444','#8B5CF6'];
+  el.innerHTML = data.map((r, i) => {
+    const avg = avgRating(r);
+    const sentiment = avg >= 4 ? 'positive' : avg <= 2 && avg > 0 ? 'negative' : 'neutral';
+    const tagCls = sentiment === 'positive' ? 'rtag-pos' : sentiment === 'negative' ? 'rtag-neg' : 'rtag-neu';
+    const initials = (r.nama_tamu || 'TG').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    const color = colors[i % colors.length];
+    const stars = [1,2,3,4,5].map(n => `<span style="color:${n<=Math.round(avg)?'#F59E0B':'#E2E8F0'}">★</span>`).join('');
+    const tags = [];
+    if (r.sumber_informasi) tags.push(r.sumber_informasi);
+    if (r.tujuan_kunjungan) tags.push(r.tujuan_kunjungan);
+    if (r.nps_score >= 9) tags.push('Promoter 🟢');
+    else if (r.nps_score >= 7) tags.push('Passive 🟡');
+    else if (r.nps_score) tags.push('Detractor 🔴');
+
+    return `<div class="review-item ${sentiment}">
+      <div class="review-head">
+        <div class="review-avatar" style="background:${color}">${initials}</div>
+        <div class="review-name">${r.nama_tamu}</div>
+        <div class="review-room">Kamar ${r.nomor_kamar}</div>
+        <div class="review-date">${r.tanggal || r.dibuat_pada?.slice(0,10) || '—'}</div>
+        <div class="review-stars">${stars}</div>
+      </div>
+      ${r.komentar ? `<div class="review-body">${r.komentar}</div>` : ''}
+      <div class="review-tags">${tags.map(t => `<span class="rtag ${tagCls}">${t}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function avgRating(r) {
+  const vals = [r.rating_pelayanan, r.rating_makanan, r.rating_kebersihan, r.rating_suasana, r.rating_fasilitas].filter(Boolean);
+  return vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : 0;
+}
+
+function filterReviews(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.className = 'filter-btn');
+  const cls = { all:'active-all', positive:'active-pos', negative:'active-neg', neutral:'active-neu' };
+  btn.classList.add(cls[type]);
+  renderReviews(type);
+}
+
+// ══════════════════════════════════════════════
+// GAUGE NPS
+// ══════════════════════════════════════════════
+function drawGauge(npsScore) {
+  const canvas = document.getElementById('gaugeCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = 90, cy = 100, r = 72, lw = 16;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  [{ start:Math.PI, end:Math.PI*1.35, fill:'#FEE2E2' },
+   { start:Math.PI*1.35, end:Math.PI*1.65, fill:'#FEF3C7' },
+   { start:Math.PI*1.65, end:Math.PI*2, fill:'#D1FAE5' }]
+  .forEach(s => {
+    ctx.beginPath(); ctx.arc(cx, cy, r, s.start, s.end);
+    ctx.lineWidth = lw; ctx.strokeStyle = s.fill; ctx.lineCap = 'butt'; ctx.stroke();
+  });
+
+  const pct = Math.min(Math.max(npsScore + 100, 0), 200) / 200;
+  const endAngle = Math.PI + pct * Math.PI;
+  const color = npsScore >= 50 ? '#10B981' : npsScore >= 0 ? '#F59E0B' : '#EF4444';
+
+  ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, endAngle);
+  ctx.lineWidth = lw; ctx.strokeStyle = color; ctx.lineCap = 'round'; ctx.stroke();
+
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(endAngle);
+  ctx.beginPath(); ctx.moveTo(-5,0); ctx.lineTo(r-18,0);
+  ctx.strokeStyle='#0F172A'; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.stroke();
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fillStyle='#0F172A'; ctx.fill();
+}
+
+// ══════════════════════════════════════════════
+// TREND CHART
+// ══════════════════════════════════════════════
+function drawTrend(data) {
+  const canvas = document.getElementById('trendCanvas');
+  if (!canvas) return;
+  if (trendChart) trendChart.destroy();
+  if (!data || !data.length) return;
+
+  const labels = data.map(d => d.bulan);
+  const vals   = data.map(d => d.avg_rating || 0);
+
+  trendChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{ data: vals, borderColor:'#6366F1', backgroundColor:'rgba(99,102,241,0.08)', borderWidth:2, pointBackgroundColor:'#6366F1', pointRadius:3, fill:true, tension:0.4 }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend:{ display:false }, tooltip:{ mode:'index', intersect:false } },
+      scales: {
+        y: { min:0, max:5, grid:{ color:'#F1F5F9' }, ticks:{ font:{ size:9 }, color:'#94A3B8', stepSize:1 } },
+        x: { grid:{ display:false }, ticks:{ font:{ size:9 }, color:'#94A3B8' } }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// DATA TABLE
+// ══════════════════════════════════════════════
+async function muatDataTable() {
+  const tbody = document.getElementById('dataTableBody');
+  tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;padding:20px;color:var(--text-2)">Memuat...</td></tr>';
+  try {
+    const res = await apiFetch('/feedback?limit=500');
+    if (!res.sukses) throw new Error(res.pesan);
+    document.getElementById('tableCount').textContent = `${res.total} data tamu`;
+    tbody.innerHTML = res.data.map(r => `
+      <tr>
+        <td>${r.id}</td>
+        <td><strong>${r.nama_tamu}</strong></td>
+        <td>${r.nomor_kamar}</td>
+        <td>${r.tanggal || '—'}</td>
+        <td>${r.whatsapp || '—'}</td>
+        <td>${r.email || '—'}</td>
+        <td>${r.tujuan_kunjungan || '—'}</td>
+        <td>${r.sumber_informasi || '—'}</td>
+        <td style="text-align:center">${r.rating_pelayanan || '—'}</td>
+        <td style="text-align:center">${r.rating_makanan || '—'}</td>
+        <td style="text-align:center">${r.rating_kebersihan || '—'}</td>
+        <td style="text-align:center">${r.rating_suasana || '—'}</td>
+        <td style="text-align:center">${r.rating_fasilitas || '—'}</td>
+        <td style="text-align:center;font-weight:800;color:${r.nps_score>=9?'var(--green)':r.nps_score>=7?'var(--amber)':'var(--red)'}">${r.nps_score || '—'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.komentar||''}">${r.komentar || '—'}</td>
+        <td><button class="btn btn-red" style="padding:3px 8px;font-size:10px" onclick="hapusData(${r.id})">🗑</button></td>
+      </tr>`).join('') || '<tr><td colspan="16" style="text-align:center;padding:20px;color:var(--text-2)">Belum ada data tamu</td></tr>';
+  } catch {
+    tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;padding:20px;color:var(--red)">Gagal memuat data. Pastikan server berjalan.</td></tr>';
+  }
+}
+
+async function hapusData(id) {
+  if (!confirm('Hapus data tamu ID ' + id + '?')) return;
+  try {
+    const res = await apiFetch('/feedback/' + id, { method: 'DELETE' });
+    if (res.sukses) { muatDataTable(); muatDashboard(); }
+    else alert('Gagal: ' + res.pesan);
+  } catch { alert('Tidak bisa terhubung ke server.'); }
+}
+
+// ══════════════════════════════════════════════
+// FORM SUBMIT
+// ══════════════════════════════════════════════
+function getStarValue(ci) {
+  const stars = document.querySelectorAll('#stars-' + ci + ' .sstar.on');
+  return stars.length || null;
+}
+function getNPS() {
+  const btn = document.querySelector('#npsInput .nps-btn.on-detractor, #npsInput .nps-btn.on-passive, #npsInput .nps-btn.on-promoter');
+  return btn ? parseInt(btn.textContent) : null;
+}
+
+async function submitForm() {
+  const nama  = document.getElementById('fName').value.trim();
+  const kamar = document.getElementById('fRoom').value.trim();
+  const successEl = document.getElementById('formSuccess');
+  const errorEl   = document.getElementById('formError');
+  const btn = document.getElementById('submitBtn');
+
+  successEl.style.display = 'none';
+  errorEl.style.display = 'none';
+
+  if (!nama || !kamar) {
+    errorEl.textContent = '⚠️ Nama tamu dan nomor kamar wajib diisi!';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+  btn.disabled = true;
+
+  const data = {
+    nama_tamu: nama, nomor_kamar: kamar,
+    tanggal: document.getElementById('fDate').value || null,
+    whatsapp: document.getElementById('fWA').value || null,
+    email: document.getElementById('fEmail').value || null,
+    social_media: document.getElementById('fSocial').value || null,
+    hobi: document.getElementById('fHobby').value || null,
+    tujuan_kunjungan: document.getElementById('fPurpose').value || null,
+    sumber_informasi: document.getElementById('fSource').value || null,
+    promo_diinginkan: document.getElementById('fPromo').value || null,
+    rating_pelayanan: getStarValue(0), rating_makanan: getStarValue(1),
+    rating_kebersihan: getStarValue(2), rating_suasana: getStarValue(3),
+    rating_fasilitas: getStarValue(4),
+    nps_score: getNPS(),
+    komentar: document.getElementById('fComments').value || null
+  };
+
+  try {
+    const res = await apiFetch('/feedback', { method: 'POST', body: JSON.stringify(data) });
+    if (res.sukses) {
+      successEl.textContent = `✓ Data ${nama} berhasil disimpan ke database! (ID: ${res.id})`;
+      successEl.style.display = 'block';
+      clearForm();
+      muatDashboard(); // refresh dashboard
+      setTimeout(() => successEl.style.display = 'none', 5000);
+    } else {
+      errorEl.textContent = '⚠️ Gagal: ' + res.pesan;
+      errorEl.style.display = 'block';
+    }
+  } catch {
+    errorEl.textContent = '⚠️ Tidak bisa terhubung ke server. Pastikan node server.js sedang berjalan!';
+    errorEl.style.display = 'block';
+  } finally {
+    btn.innerHTML = '✓ Simpan Data Tamu';
+    btn.disabled = false;
+  }
+}
+
+function clearForm() {
+  ['fName','fRoom','fWA','fEmail','fSocial','fHobby','fPromo','fComments'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['fPurpose','fSource'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.selectedIndex = 0;
+  });
+  [0,1,2,3,4].forEach(ci => {
+    const c = document.getElementById('stars-' + ci);
+    if (c) c.querySelectorAll('.sstar').forEach(b => b.classList.remove('on'));
+  });
+  document.querySelectorAll('#npsInput .nps-btn').forEach(b => b.className = 'nps-btn');
+}
+
+// ══════════════════════════════════════════════
+// FORM: Star & NPS Input Render
+// ══════════════════════════════════════════════
+function renderStarsInput() {
+  const cats = ['Pelayanan','Makanan','Kebersihan','Suasana','Fasilitas'];
+  document.getElementById('starsInput').innerHTML = cats.map((name, ci) => `
+    <div class="star-row">
+      <div class="star-label">${name}</div>
+      <div class="stars" id="stars-${ci}">
+        ${[1,2,3,4,5].map(n=>`<button class="sstar" onclick="setStar(${ci},${n})">${n}★</button>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function setStar(ci, val) {
+  document.getElementById('stars-' + ci).querySelectorAll('.sstar').forEach((b, i) => b.classList.toggle('on', i < val));
+}
+
+function renderNPSInput() {
+  document.getElementById('npsInput').innerHTML = Array.from({length:10}, (_, i) => {
+    const v = i + 1;
+    const col = v <= 6 ? '#EF4444' : v <= 8 ? '#F59E0B' : '#10B981';
+    return `<button class="nps-btn" onclick="selectNPS(this,${v})" style="color:${col}">${v}</button>`;
+  }).join('');
+}
+
+function selectNPS(btn, val) {
+  document.querySelectorAll('#npsInput .nps-btn').forEach(b => b.className = 'nps-btn');
+  btn.classList.add(val <= 6 ? 'on-detractor' : val <= 8 ? 'on-passive' : 'on-promoter');
+}
+
+// ══════════════════════════════════════════════
+// EKSPOR CSV
+// ══════════════════════════════════════════════
+async function eksporCSV() {
+  try {
+    const res = await apiFetch('/feedback?limit=9999');
+    if (!res.sukses || !res.data.length) { alert('Tidak ada data untuk diekspor.'); return; }
+    const headers = ['ID','Nama','Kamar','Tanggal','WhatsApp','Email','Social Media','Hobi','Tujuan','Sumber','Promo','Pelayanan','Makanan','Kebersihan','Suasana','Fasilitas','NPS','Komentar','Dibuat Pada'];
+    const rows = res.data.map(r => [r.id,r.nama_tamu,r.nomor_kamar,r.tanggal,r.whatsapp,r.email,r.social_media,r.hobi,r.tujuan_kunjungan,r.sumber_informasi,r.promo_diinginkan,r.rating_pelayanan,r.rating_makanan,r.rating_kebersihan,r.rating_suasana,r.rating_fasilitas,r.nps_score,r.komentar,r.dibuat_pada].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob(['\ufeff'+csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `GuestFeedback_GriyaPersada_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  } catch { alert('Tidak bisa terhubung ke server.'); }
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  // Set tanggal hari ini
+  const today = new Date().toISOString().split('T')[0];
+  const dateInput = document.getElementById('fDate');
+  if (dateInput) dateInput.value = today;
+
+  // Tampilkan tanggal di topbar
+  document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('id-ID', { month:'long', year:'numeric' });
+  document.getElementById('topbarSub').textContent = '· Griya Persada · ' + new Date().toLocaleDateString('id-ID', { month:'long', year:'numeric' });
+
+  // Render static form parts
+  renderStarsInput();
+  renderNPSInput();
+
+  // Cek server lalu muat data
+  const online = await cekServer();
+  if (online) {
+    await muatDashboard();
+  } else {
+    document.querySelectorAll('[id^="stat-"]').forEach(el => {
+      if (!el.id.includes('delta')) el.textContent = '—';
+    });
+    ['ratingBars','sourceList','hobbyWrap','reviewList'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '<div style="color:var(--gray);font-size:11px;padding:8px">ℹ️ Gagal memuat data. Pastikan koneksi internet stabil.</div>';
+    });
+  }
+});
+</script>
+</body>
+</html>
